@@ -24,6 +24,7 @@ import {
   DownloadCloud,
   Check,
   Undo2,
+  ScrollText,
 } from 'lucide-react';
 import { InstalledAI } from './ManageAgentsModal';
 import { AgentRole, SupervisorConfig } from '../types/agent-roles';
@@ -141,6 +142,12 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   const [projectScripts, setProjectScripts] = useState<Record<string, string>>({});
   const [showScriptsMenu, setShowScriptsMenu] = useState(false);
   const scriptsRef = useRef<HTMLDivElement>(null);
+
+  // Dev Log (git commit log) state
+  const [showDevLog, setShowDevLog] = useState(false);
+  const [devLogCommits, setDevLogCommits] = useState<Array<{ hash: string; shortHash: string; author: string; relativeTime: string; message: string }>>([]);
+  const [devLogLoading, setDevLogLoading] = useState(false);
+  const devLogRef = useRef<HTMLDivElement>(null);
 
   // Read package.json scripts on mount or project path change
   useEffect(() => {
@@ -274,6 +281,44 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
       document.removeEventListener('mousedown', handleOutsideClick);
     };
   }, [showScriptsMenu]);
+
+  // Open dev log: fetch git log then show panel
+  const handleOpenDevLog = async () => {
+    if (showDevLog) {
+      setShowDevLog(false);
+      return;
+    }
+    setShowDevLog(true);
+    if (!project.path) return;
+    setDevLogLoading(true);
+    try {
+      const res = await window.electronAPI?.gitGetLog(project.path, 30);
+      if (res?.success && Array.isArray(res.commits)) {
+        setDevLogCommits(res.commits);
+      } else {
+        setDevLogCommits([]);
+      }
+    } catch {
+      setDevLogCommits([]);
+    } finally {
+      setDevLogLoading(false);
+    }
+  };
+
+  // Close dev log on click outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (devLogRef.current && !devLogRef.current.contains(e.target as Node)) {
+        setShowDevLog(false);
+      }
+    };
+    if (showDevLog) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [showDevLog]);
 
   // Toolbar state
   const [selectedReview, setSelectedReview] = useState('auto_review');
@@ -966,6 +1011,44 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
               >
                 <Trash2 size={12} color="#9ca3af" />
               </button>
+            )}
+
+            {/* Dev Log Button (git commit log) */}
+            {(gitInfo.isRepo || gitDetails?.isRepo) && (
+              <div style={{ position: 'relative' }} ref={devLogRef}>
+                <button
+                  className={`discussion-header-icon-btn ${showDevLog ? 'active' : ''}`}
+                  title="Dev Log – Git commit history"
+                  onClick={handleOpenDevLog}
+                >
+                  <ScrollText size={12} color={showDevLog ? '#60a5fa' : '#9ca3af'} />
+                  <span className="discussion-btn-text">Dev Log</span>
+                </button>
+
+                {showDevLog && (
+                  <div className="discussion-devlog-dropdown">
+                    <div className="discussion-dropdown-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <ScrollText size={12} color="#60a5fa" />
+                      Git Commit Log
+                    </div>
+                    {devLogLoading ? (
+                      <div className="discussion-devlog-loading">Loading commits...</div>
+                    ) : devLogCommits.length === 0 ? (
+                      <div className="discussion-devlog-loading">No commits found.</div>
+                    ) : (
+                      <div className="discussion-devlog-list">
+                        {devLogCommits.map((c) => (
+                          <div key={c.hash} className="discussion-devlog-item">
+                            <span className="devlog-hash">{c.shortHash}</span>
+                            <span className="devlog-msg" title={c.message}>{c.message}</span>
+                            <span className="devlog-meta">{c.author} · {c.relativeTime}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             <div className="discussion-header-divider" />
