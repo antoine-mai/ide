@@ -1051,34 +1051,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
               </div>
             )}
 
-            <div className="discussion-header-divider" />
-
-            {/* Assigned Agents Pill List */}
-            <div className="discussion-agents-list">
-              {assignedAgents.slice(0, 3).map((ag) => (
-                <div key={ag.id} className="discussion-agent-pill" title={`${ag.name} (${ag.command})`}>
-                  <Bot size={11} color="#60a5fa" />
-                  <span className="discussion-agent-pill-name">{ag.name}</span>
-                  <button
-                    className="discussion-agent-pill-remove"
-                    title={`Remove ${ag.name}`}
-                    onClick={() => onToggleAgent(ag.id)}
-                  >
-                    <X size={10} />
-                  </button>
-                </div>
-              ))}
-
-              {assignedAgents.length > 3 && (
-                <span
-                  className="discussion-agent-pill more-pill"
-                  title={assignedAgents.slice(3).map((a) => a.name).join(', ')}
-                >
-                  +{assignedAgents.length - 3}
-                </span>
-              )}
-            </div>
-
             {/* Smart Node.js Project Scripts Buttons */}
             {Object.keys(projectScripts).length > 0 && (
               <>
@@ -1198,6 +1170,49 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
               </>
             ) : (
               <span className="discussion-no-git-notice">No Git repository detected</span>
+            )}
+          </div>
+        </div>
+
+        {/* Agents Panel – right column */}
+        <div className="discussion-header-agents">
+          <div className="discussion-header-agents-label">
+            <Bot size={11} color="#60a5fa" />
+            <span>Agents</span>
+          </div>
+          <div className="discussion-header-agents-list">
+            {assignedAgents.length === 0 ? (
+              <button
+                className="discussion-header-agents-add"
+                title="Assign agents to this project"
+                onClick={onOpenManageAgents}
+              >
+                <Plus size={11} />
+                <span>Add agent</span>
+              </button>
+            ) : (
+              <>
+                {assignedAgents.map((ag) => (
+                  <div key={ag.id} className="discussion-agent-pill" title={`${ag.name} (${ag.command})`}>
+                    <Bot size={11} color="#60a5fa" />
+                    <span className="discussion-agent-pill-name">{ag.name}</span>
+                    <button
+                      className="discussion-agent-pill-remove"
+                      title={`Remove ${ag.name}`}
+                      onClick={() => onToggleAgent(ag.id)}
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  className="discussion-header-agents-add"
+                  title="Add more agents"
+                  onClick={onOpenManageAgents}
+                >
+                  <Plus size={11} />
+                </button>
+              </>
             )}
           </div>
         </div>
