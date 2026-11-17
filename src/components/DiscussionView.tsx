@@ -139,6 +139,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   });
 
   // Project package.json scripts (for Node.js projects)
+  const [isNodeProject, setIsNodeProject] = useState(false);
   const [projectScripts, setProjectScripts] = useState<Record<string, string>>({});
   const [showScriptsMenu, setShowScriptsMenu] = useState(false);
   const scriptsRef = useRef<HTMLDivElement>(null);
@@ -149,10 +150,11 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   const [devLogLoading, setDevLogLoading] = useState(false);
   const devLogRef = useRef<HTMLDivElement>(null);
 
-  // Read package.json scripts on mount or project path change
+  // Detect Node.js project & read package.json scripts on mount or project path change
   useEffect(() => {
     let mounted = true;
     if (!project.path) {
+      setIsNodeProject(false);
       setProjectScripts({});
       return;
     }
@@ -161,6 +163,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
     window.electronAPI?.readFile(packageJsonPath).then((content) => {
       if (!mounted) return;
       if (content) {
+        setIsNodeProject(true);
         try {
           const parsed = JSON.parse(content);
           if (parsed && typeof parsed.scripts === 'object' && parsed.scripts !== null) {
@@ -168,10 +171,16 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             return;
           }
         } catch {}
+        setProjectScripts({});
+      } else {
+        setIsNodeProject(false);
+        setProjectScripts({});
       }
-      setProjectScripts({});
     }).catch(() => {
-      if (mounted) setProjectScripts({});
+      if (mounted) {
+        setIsNodeProject(false);
+        setProjectScripts({});
+      }
     });
 
     return () => {
@@ -988,73 +997,75 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
           </div>
         </div>
 
-        {/* 3 Explicit Header Zones: SCRIPTS | GIT | AGENTS */}
+        {/* Header Zones: NODEJS (if detected) | GIT | AGENTS */}
         <div className="discussion-header-zones">
-          {/* Zone 1: Scripts */}
-          <div className="discussion-header-zone zone-scripts">
-            <div className="discussion-zone-title">
-              <TerminalIcon size={10} color="#10b981" />
-              <span>Scripts</span>
-            </div>
-            <div className="discussion-zone-content">
-              {Object.keys(projectScripts).length > 0 ? (
-                <div className="discussion-scripts-bar" ref={scriptsRef}>
-                  {Object.entries(projectScripts).slice(0, 3).map(([scriptName, scriptCmd]) => (
-                    <button
-                      key={scriptName}
-                      className="discussion-script-btn"
-                      title={`Run 'npm run ${scriptName}' in terminal\nCommand: ${scriptCmd}`}
-                      onClick={() => onRunScript?.(scriptName, scriptCmd)}
-                    >
-                      <Play size={10} color="#10b981" />
-                      <span>{scriptName}</span>
-                    </button>
-                  ))}
-
-                  {Object.keys(projectScripts).length > 3 && (
-                    <div style={{ position: 'relative' }}>
+          {/* Zone 1: Node.js (Only visible when package.json is detected) */}
+          {isNodeProject && (
+            <div className="discussion-header-zone zone-nodejs">
+              <div className="discussion-zone-title">
+                <TerminalIcon size={10} color="#10b981" />
+                <span>Node.js</span>
+              </div>
+              <div className="discussion-zone-content">
+                {Object.keys(projectScripts).length > 0 ? (
+                  <div className="discussion-scripts-bar" ref={scriptsRef}>
+                    {Object.entries(projectScripts).slice(0, 3).map(([scriptName, scriptCmd]) => (
                       <button
-                        className="discussion-script-btn more-btn"
-                        title="More npm scripts..."
-                        onClick={() => setShowScriptsMenu(!showScriptsMenu)}
+                        key={scriptName}
+                        className="discussion-script-btn"
+                        title={`Run 'npm run ${scriptName}' in terminal\nCommand: ${scriptCmd}`}
+                        onClick={() => onRunScript?.(scriptName, scriptCmd)}
                       >
-                        <TerminalIcon size={10} color="#60a5fa" />
-                        <span>+{Object.keys(projectScripts).length - 3}</span>
-                        <ChevronDown size={9} />
+                        <Play size={10} color="#10b981" />
+                        <span>{scriptName}</span>
                       </button>
+                    ))}
 
-                      {showScriptsMenu && (
-                        <div className="discussion-scripts-dropdown">
-                          <div className="discussion-dropdown-title">npm scripts</div>
-                          {Object.entries(projectScripts).slice(3).map(([scriptName, scriptCmd]) => (
-                            <button
-                              key={scriptName}
-                              className="discussion-dropdown-item"
-                              onClick={() => {
-                                setShowScriptsMenu(false);
-                                onRunScript?.(scriptName, scriptCmd);
-                              }}
-                              title={scriptCmd}
-                            >
-                              <Play size={11} color="#10b981" />
-                              <span className="agent-item-name" style={{ fontFamily: 'monospace' }}>
-                                {scriptName}
-                              </span>
-                              <span style={{ fontSize: 9, color: '#64748b', marginLeft: 'auto', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {scriptCmd}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <span className="discussion-zone-empty">No scripts</span>
-              )}
+                    {Object.keys(projectScripts).length > 3 && (
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          className="discussion-script-btn more-btn"
+                          title="More npm scripts..."
+                          onClick={() => setShowScriptsMenu(!showScriptsMenu)}
+                        >
+                          <TerminalIcon size={10} color="#60a5fa" />
+                          <span>+{Object.keys(projectScripts).length - 3}</span>
+                          <ChevronDown size={9} />
+                        </button>
+
+                        {showScriptsMenu && (
+                          <div className="discussion-scripts-dropdown">
+                            <div className="discussion-dropdown-title">npm scripts</div>
+                            {Object.entries(projectScripts).slice(3).map(([scriptName, scriptCmd]) => (
+                              <button
+                                key={scriptName}
+                                className="discussion-dropdown-item"
+                                onClick={() => {
+                                  setShowScriptsMenu(false);
+                                  onRunScript?.(scriptName, scriptCmd);
+                                }}
+                                title={scriptCmd}
+                              >
+                                <Play size={11} color="#10b981" />
+                                <span className="agent-item-name" style={{ fontFamily: 'monospace' }}>
+                                  {scriptName}
+                                </span>
+                                <span style={{ fontSize: 9, color: '#64748b', marginLeft: 'auto', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {scriptCmd}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="discussion-zone-empty">No scripts</span>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Zone 2: Git Actions */}
           <div className="discussion-header-zone zone-git">

@@ -3052,7 +3052,8 @@ body {
   box-sizing: border-box;
 }
 
-.discussion-header-zone.zone-scripts {
+.discussion-header-zone.zone-scripts,
+.discussion-header-zone.zone-nodejs {
   min-width: 140px;
 }
 
