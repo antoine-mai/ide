@@ -26,17 +26,11 @@ if [ ! -d ".git" ]; then
     git remote add origin https://github.com/antoine-mai/ide.git || true
 fi
 
-# 2. Get commit message from argument or prompt
-COMMIT_MSG="$*"
-
-if [ -z "${COMMIT_MSG}" ]; then
-    echo -e "${CYAN}Enter commit message (leave blank for default):${NC}"
-    read -r USER_INPUT
-    if [ -n "${USER_INPUT}" ]; then
-        COMMIT_MSG="${USER_INPUT}"
-    else
-        COMMIT_MSG="feat: update Zerous multi-agent workspace, branding and build pipelines"
-    fi
+# 2. Get commit message (default if not provided as argument)
+if [ -n "$*" ]; then
+    COMMIT_MSG="$*"
+else
+    COMMIT_MSG="feat: update Zerous multi-agent workspace, branding and build pipelines"
 fi
 
 # 3. Show current status
@@ -59,7 +53,17 @@ fi
 CURRENT_BRANCH=$(git branch --show-current || echo "main")
 echo -e "\n${YELLOW}--> Pushing to origin/${CURRENT_BRANCH}...${NC}"
 
-git push -u origin "${CURRENT_BRANCH}"
+# If remote repository has divergent history (e.g. initial README on github), pull with rebase first or push
+if ! git push -u origin "${CURRENT_BRANCH}"; then
+    echo -e "${YELLOW}[NOTICE] Push rejected. Trying pull --rebase to sync remote changes...${NC}"
+    git pull --rebase origin "${CURRENT_BRANCH}" || {
+        echo -e "${RED}[ERROR] Rebase conflict occurred. Overriding with force push if intended, or resolve conflicts.${NC}"
+        echo -e "${YELLOW}To force push your new codebase to GitHub, you can run:${NC}"
+        echo -e "  git push -u origin ${CURRENT_BRANCH} --force"
+        exit 1
+    }
+    git push -u origin "${CURRENT_BRANCH}"
+fi
 
 echo -e "\n${GREEN}====================================================${NC}"
 echo -e "${GREEN}   Successfully pushed to GitHub:                   ${NC}"
