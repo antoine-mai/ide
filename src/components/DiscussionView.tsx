@@ -22,8 +22,9 @@ import {
   Play,
   Terminal as TerminalIcon,
   GitCommit,
-  ArrowUp,
-  ArrowDown,
+  UploadCloud,
+  DownloadCloud,
+  Check,
 } from 'lucide-react';
 import { InstalledAI } from './ManageAgentsModal';
 import { AgentRole, SupervisorConfig } from '../types/agent-roles';
@@ -171,6 +172,71 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
       mounted = false;
     };
   }, [project.path]);
+
+  // Git Quick Actions loading state & feedback
+  const [gitActionLoading, setGitActionLoading] = useState<'pull' | 'push' | 'commit' | null>(null);
+  const [gitActionMessage, setGitActionMessage] = useState<string | null>(null);
+
+  const handleQuickGitPull = async () => {
+    if (!project.path || gitActionLoading) return;
+    setGitActionLoading('pull');
+    setGitActionMessage(null);
+    try {
+      const res = await window.electronAPI?.gitPull(project.path);
+      if (res?.success) {
+        setGitActionMessage('Pulled successfully');
+      } else {
+        setGitActionMessage(res?.error ? `Pull failed: ${res.error}` : 'Pull failed');
+      }
+    } catch (e: any) {
+      setGitActionMessage(`Pull error: ${e?.message || e}`);
+    } finally {
+      setGitActionLoading(null);
+      setTimeout(() => setGitActionMessage(null), 4000);
+    }
+  };
+
+  const handleQuickGitPush = async () => {
+    if (!project.path || gitActionLoading) return;
+    setGitActionLoading('push');
+    setGitActionMessage(null);
+    try {
+      const res = await window.electronAPI?.gitPush(project.path);
+      if (res?.success) {
+        setGitActionMessage('Pushed successfully');
+      } else {
+        setGitActionMessage(res?.error ? `Push failed: ${res.error}` : 'Push failed');
+      }
+    } catch (e: any) {
+      setGitActionMessage(`Push error: ${e?.message || e}`);
+    } finally {
+      setGitActionLoading(null);
+      setTimeout(() => setGitActionMessage(null), 4000);
+    }
+  };
+
+  const handleQuickGitCommit = async () => {
+    if (!project.path || gitActionLoading) return;
+    const msg = window.prompt(`Enter commit message for ${project.name}:`);
+    if (!msg || !msg.trim()) return;
+
+    setGitActionLoading('commit');
+    setGitActionMessage(null);
+    try {
+      await window.electronAPI?.gitStageAll(project.path);
+      const res = await window.electronAPI?.gitCommit(project.path, msg.trim());
+      if (res?.success) {
+        setGitActionMessage(`Committed: "${msg.trim()}"`);
+      } else {
+        setGitActionMessage(res?.error ? `Commit error: ${res.error}` : 'Commit failed');
+      }
+    } catch (e: any) {
+      setGitActionMessage(`Commit error: ${e?.message || e}`);
+    } finally {
+      setGitActionLoading(null);
+      setTimeout(() => setGitActionMessage(null), 4000);
+    }
+  };
 
   // Close scripts dropdown on click outside
   useEffect(() => {
@@ -975,10 +1041,54 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             )}
           </div>
 
-          {/* Row 2 (Bottom): Git Actions (Branch, Status, Changes, History, Sync) */}
+          {/* Row 2 (Bottom): Git Actions (Commit, Push, Pull, Sync, Branch Switcher, Changes) */}
           <div className="discussion-header-row bottom-row">
             {gitInfo.isRepo || gitDetails?.isRepo ? (
               <>
+                {/* Quick Git Pull Action Button */}
+                <button
+                  className="discussion-git-action-btn pull-btn"
+                  title="Git Pull: Fetch and merge remote changes"
+                  disabled={gitActionLoading !== null}
+                  onClick={handleQuickGitPull}
+                >
+                  <DownloadCloud size={11} color="#38bdf8" />
+                  <span>{gitActionLoading === 'pull' ? 'Pulling...' : 'Pull'}</span>
+                </button>
+
+                {/* Quick Git Push Action Button */}
+                <button
+                  className="discussion-git-action-btn push-btn"
+                  title="Git Push: Push committed changes to remote repository"
+                  disabled={gitActionLoading !== null}
+                  onClick={handleQuickGitPush}
+                >
+                  <UploadCloud size={11} color="#10b981" />
+                  <span>{gitActionLoading === 'push' ? 'Pushing...' : 'Push'}</span>
+                </button>
+
+                {/* Quick Git Commit Action Button */}
+                <button
+                  className="discussion-git-action-btn commit-btn"
+                  title="Git Commit: Stage all changes and commit"
+                  disabled={gitActionLoading !== null}
+                  onClick={handleQuickGitCommit}
+                >
+                  <Check size={11} color="#f59e0b" />
+                  <span>{gitActionLoading === 'commit' ? 'Committing...' : 'Commit'}</span>
+                </button>
+
+                {/* Feedback message banner if any */}
+                {gitActionMessage && (
+                  <span
+                    className={`discussion-git-msg ${gitActionMessage.includes('fail') || gitActionMessage.includes('error') ? 'error' : 'success'}`}
+                  >
+                    {gitActionMessage}
+                  </span>
+                )}
+
+                <div className="discussion-header-divider" />
+
                 {/* Branch Switcher Button */}
                 <button
                   className="discussion-git-action-btn branch-btn"
@@ -998,28 +1108,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                   <FileText size={11} color={(gitDetails?.isDirty || gitInfo.isDirty) ? '#f59e0b' : '#10b981'} />
                   <span>{(gitDetails?.isDirty || gitInfo.isDirty) ? `${gitDetails?.changeCount || 'Modified'} changes` : 'Clean'}</span>
                 </button>
-
-                {/* Ahead / Behind Sync Info */}
-                {((gitDetails?.ahead ?? 0) > 0 || (gitDetails?.behind ?? 0) > 0) && (
-                  <button
-                    className="discussion-git-action-btn sync-btn"
-                    title="Pull/Push changes with remote repository"
-                    onClick={() => onOpenGitModal?.('changes')}
-                  >
-                    {(gitDetails?.behind ?? 0) > 0 && (
-                      <span className="git-sync-item">
-                        <ArrowDown size={10} color="#38bdf8" />
-                        <span>{gitDetails?.behind}</span>
-                      </span>
-                    )}
-                    {(gitDetails?.ahead ?? 0) > 0 && (
-                      <span className="git-sync-item">
-                        <ArrowUp size={10} color="#38bdf8" />
-                        <span>{gitDetails?.ahead}</span>
-                      </span>
-                    )}
-                  </button>
-                )}
 
                 {/* Commit History Button */}
                 <button

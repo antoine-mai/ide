@@ -3079,6 +3079,61 @@ body {
   color: #ffffff;
 }
 
+.discussion-git-action-btn.pull-btn {
+  color: #38bdf8;
+  border-color: #164e63;
+}
+
+.discussion-git-action-btn.pull-btn:hover {
+  background-color: #0c2d3a;
+  border-color: #0284c7;
+  color: #bae6fd;
+}
+
+.discussion-git-action-btn.push-btn {
+  color: #34d399;
+  border-color: #064e3b;
+}
+
+.discussion-git-action-btn.push-btn:hover {
+  background-color: #06372b;
+  border-color: #10b981;
+  color: #a7f3d0;
+}
+
+.discussion-git-action-btn.commit-btn {
+  color: #fbbf24;
+  border-color: #78350f;
+}
+
+.discussion-git-action-btn.commit-btn:hover {
+  background-color: #381a06;
+  border-color: #f59e0b;
+  color: #fde68a;
+}
+
+.discussion-git-msg {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.discussion-git-msg.success {
+  color: #34d399;
+  background-color: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.discussion-git-msg.error {
+  color: #f87171;
+  background-color: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 .discussion-git-action-btn.branch-btn {
   color: #93c5fd;
   border-color: #2a344a;
