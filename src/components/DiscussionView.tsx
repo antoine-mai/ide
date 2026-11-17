@@ -1161,18 +1161,18 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             <div className="discussion-zone-title">
               <Bot size={10} color="#60a5fa" />
               <span>Agents</span>
-              {/* Roles modal button in agents title */}
+            </div>
+            <div className="discussion-zone-content">
+              {/* Roles modal button on content row */}
               <button
                 className="discussion-zone-mini-btn"
                 title={`Configure Roles & Supervisor (${roles.length} roles)`}
                 onClick={() => setIsRoleModalOpen(true)}
-                style={{ marginLeft: 'auto' }}
               >
-                <Sliders size={10} color="#a5b4fc" />
+                <Sliders size={11} color="#a5b4fc" />
                 <span>Roles ({roles.length})</span>
               </button>
-            </div>
-            <div className="discussion-zone-content">
+
               <div className="discussion-header-agents-icons">
                 {assignedAgents.map((ag) => (
                   <button
