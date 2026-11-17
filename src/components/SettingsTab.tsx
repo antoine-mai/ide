@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react';
-import { AppSettings } from '../types/settings';
+import { AppSettings, PRESET_FONTS } from '../types/settings';
 import { InstalledAI } from './ManageAgentsModal';
 
 interface SettingsTabProps {
@@ -453,14 +453,80 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div className="settings-row">
                   <div className="settings-row-info">
                     <span className="settings-row-key">Editor: Font Family</span>
-                    <span className="settings-row-desc">Controls the font family for code syntax rendering.</span>
+                    <span className="settings-row-desc">
+                      Controls the font family for code syntax rendering. Choose from preset fonts (including <strong>Monaco</strong>) or enter a custom font stack.
+                    </span>
                   </div>
-                  <div className="settings-row-control">
+                  <div className="settings-row-control" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <select
+                      className="settings-select"
+                      value={
+                        PRESET_FONTS.find((f) => f.value === settings.editorFontFamily)?.value || 'custom'
+                      }
+                      onChange={(e) => {
+                        if (e.target.value !== 'custom') {
+                          onUpdateSettings({ editorFontFamily: e.target.value });
+                        }
+                      }}
+                    >
+                      {PRESET_FONTS.map((font) => (
+                        <option key={font.id} value={font.value}>
+                          {font.name}
+                        </option>
+                      ))}
+                      <option value="custom">Custom Font Stack...</option>
+                    </select>
                     <input
                       type="text"
                       className="settings-input-text"
+                      placeholder="e.g. Monaco, Menlo, 'Courier New', monospace"
                       value={settings.editorFontFamily}
                       onChange={(e) => onUpdateSettings({ editorFontFamily: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Editor Font Weight */}
+              {filterMatches('editor.fontWeight', 'Editor: Font Weight', 'Controls the font weight.') && (
+                <div className="settings-row">
+                  <div className="settings-row-info">
+                    <span className="settings-row-key">Editor: Font Weight</span>
+                    <span className="settings-row-desc">Controls the font weight (normal, bold, or numeric values).</span>
+                  </div>
+                  <div className="settings-row-control">
+                    <select
+                      className="settings-select"
+                      value={settings.editorFontWeight || 'normal'}
+                      onChange={(e) => onUpdateSettings({ editorFontWeight: e.target.value as any })}
+                    >
+                      <option value="normal">normal</option>
+                      <option value="bold">bold</option>
+                      <option value="300">300 (Light)</option>
+                      <option value="400">400 (Regular)</option>
+                      <option value="500">500 (Medium)</option>
+                      <option value="600">600 (Semi-bold)</option>
+                      <option value="700">700 (Bold)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Editor Line Height */}
+              {filterMatches('editor.lineHeight', 'Editor: Line Height', 'Controls the line height in pixels.') && (
+                <div className="settings-row">
+                  <div className="settings-row-info">
+                    <span className="settings-row-key">Editor: Line Height</span>
+                    <span className="settings-row-desc">Controls the line height in pixels for the code editor (0 for default).</span>
+                  </div>
+                  <div className="settings-row-control">
+                    <input
+                      type="number"
+                      className="settings-input-number"
+                      value={settings.editorLineHeight || 20}
+                      min={14}
+                      max={48}
+                      onChange={(e) => onUpdateSettings({ editorLineHeight: Number(e.target.value) || 20 })}
                     />
                   </div>
                 </div>
@@ -590,6 +656,44 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       min={10}
                       max={32}
                       onChange={(e) => onUpdateSettings({ terminalFontSize: Number(e.target.value) || 13 })}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Terminal Font Family */}
+              {filterMatches('terminal.fontFamily', 'Terminal: Font Family', 'Controls the font family of the terminal.') && (
+                <div className="settings-row">
+                  <div className="settings-row-info">
+                    <span className="settings-row-key">Terminal: Font Family</span>
+                    <span className="settings-row-desc">
+                      Controls the font family of the integrated terminal (default includes <strong>Monaco</strong>).
+                    </span>
+                  </div>
+                  <div className="settings-row-control" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <select
+                      className="settings-select"
+                      value={
+                        PRESET_FONTS.find((f) => f.value === settings.terminalFontFamily)?.value || 'custom'
+                      }
+                      onChange={(e) => {
+                        if (e.target.value !== 'custom') {
+                          onUpdateSettings({ terminalFontFamily: e.target.value });
+                        }
+                      }}
+                    >
+                      {PRESET_FONTS.map((font) => (
+                        <option key={font.id} value={font.value}>
+                          {font.name}
+                        </option>
+                      ))}
+                      <option value="custom">Custom Font Stack...</option>
+                    </select>
+                    <input
+                      type="text"
+                      className="settings-input-text"
+                      value={settings.terminalFontFamily}
+                      onChange={(e) => onUpdateSettings({ terminalFontFamily: e.target.value })}
                     />
                   </div>
                 </div>

@@ -19,6 +19,8 @@ import {
   CheckCircle2,
   Trash2,
   AtSign,
+  Play,
+  Terminal as TerminalIcon,
 } from 'lucide-react';
 import { InstalledAI } from './ManageAgentsModal';
 import { AgentRole, SupervisorConfig } from '../types/agent-roles';
@@ -84,6 +86,7 @@ interface DiscussionViewProps {
   activeAgentIds: string[];
   onToggleAgent: (agentId: string) => void;
   onOpenManageAgents: () => void;
+  onRunScript?: (scriptName: string, scriptCmd: string) => void;
   projectBadge: string;
 }
 
@@ -105,13 +108,13 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   activeAgentIds,
   onToggleAgent,
   onOpenManageAgents,
+  onRunScript,
   projectBadge,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
-  const [showAddAgentMenu, setShowAddAgentMenu] = useState(false);
 
   // Git status of this project
   const [gitInfo, setGitInfo] = useState<{ isRepo: boolean; branch: string; isDirty: boolean }>({
@@ -119,6 +122,56 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
     branch: '',
     isDirty: false,
   });
+
+  // Project package.json scripts (for Node.js projects)
+  const [projectScripts, setProjectScripts] = useState<Record<string, string>>({});
+  const [showScriptsMenu, setShowScriptsMenu] = useState(false);
+  const scriptsRef = useRef<HTMLDivElement>(null);
+
+  // Read package.json scripts on mount or project path change
+  useEffect(() => {
+    let mounted = true;
+    if (!project.path) {
+      setProjectScripts({});
+      return;
+    }
+
+    const packageJsonPath = `${project.path.replace(/\\/g, '/')}/package.json`;
+    window.electronAPI?.readFile(packageJsonPath).then((content) => {
+      if (!mounted) return;
+      if (content) {
+        try {
+          const parsed = JSON.parse(content);
+          if (parsed && typeof parsed.scripts === 'object' && parsed.scripts !== null) {
+            setProjectScripts(parsed.scripts);
+            return;
+          }
+        } catch {}
+      }
+      setProjectScripts({});
+    }).catch(() => {
+      if (mounted) setProjectScripts({});
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [project.path]);
+
+  // Close scripts dropdown on click outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (scriptsRef.current && !scriptsRef.current.contains(e.target as Node)) {
+        setShowScriptsMenu(false);
+      }
+    };
+    if (showScriptsMenu) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [showScriptsMenu]);
 
   // Toolbar state
   const [selectedReview, setSelectedReview] = useState('auto_review');
@@ -128,7 +181,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   // Active dropdown
   const [openDropdown, setOpenDropdown] = useState<'review' | 'mode' | null>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const addAgentRef = useRef<HTMLDivElement>(null);
 
   // Multi-Agent Roles & Rules + Supervisor Config
   const [roles, setRoles] = useState<AgentRole[]>(() => {
@@ -268,9 +320,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
       if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
         setOpenDropdown(null);
       }
-      if (addAgentRef.current && !addAgentRef.current.contains(e.target as Node)) {
-        setShowAddAgentMenu(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
@@ -406,7 +455,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   }, [activeSessionId]);
 
   const assignedAgents = installedAIs.filter((a) => activeAgentIds.includes(a.id));
-  const availableToAdd = installedAIs.filter((a) => !activeAgentIds.includes(a.id));
 
   // Attachment Picker
   const handlePickAttachments = async () => {
@@ -849,61 +897,68 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                 +{assignedAgents.length - 3}
               </span>
             )}
-
-            {/* Add Agent Button & Dropdown */}
-            <div className="discussion-add-agent-wrap" ref={addAgentRef}>
-              <button
-                className="discussion-add-agent-btn"
-                title="Add Agent to this Discussion"
-                onClick={() => setShowAddAgentMenu(!showAddAgentMenu)}
-              >
-                <Plus size={12} />
-                <span>Agent</span>
-              </button>
-
-              {showAddAgentMenu && (
-                <div className="discussion-add-agent-dropdown">
-                  <div className="discussion-dropdown-title">Installed Agents</div>
-                  {availableToAdd.length > 0 ? (
-                    availableToAdd.map((ag) => (
-                      <button
-                        key={ag.id}
-                        className="discussion-dropdown-item"
-                        onClick={() => {
-                          onToggleAgent(ag.id);
-                          setShowAddAgentMenu(false);
-                        }}
-                      >
-                        <Bot size={13} color="#60a5fa" />
-                        <span className="agent-item-name">{ag.name}</span>
-                        {ag.customHome && (
-                          <span className="agent-item-iso">Isolated</span>
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="discussion-dropdown-empty">
-                      {installedAIs.length === 0
-                        ? 'No agents installed yet'
-                        : 'All installed agents are assigned'}
-                    </div>
-                  )}
-
-                  <div className="agents-dropdown-divider" />
-                  <button
-                    className="agent-dropdown-manage"
-                    onClick={() => {
-                      setShowAddAgentMenu(false);
-                      onOpenManageAgents();
-                    }}
-                  >
-                    <Plus size={13} />
-                    <span>Manage Agents...</span>
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
+
+          {/* Smart Node.js Project Scripts Buttons */}
+          {Object.keys(projectScripts).length > 0 && (
+            <>
+              <div className="discussion-header-divider" />
+              <div className="discussion-scripts-bar" ref={scriptsRef}>
+                {/* Display up to 3 primary scripts as direct quick-run buttons */}
+                {Object.entries(projectScripts).slice(0, 3).map(([scriptName, scriptCmd]) => (
+                  <button
+                    key={scriptName}
+                    className="discussion-script-btn"
+                    title={`Run 'npm run ${scriptName}' in terminal\nCommand: ${scriptCmd}`}
+                    onClick={() => onRunScript?.(scriptName, scriptCmd)}
+                  >
+                    <Play size={10} color="#10b981" />
+                    <span>{scriptName}</span>
+                  </button>
+                ))}
+
+                {/* More scripts dropdown if more than 3 */}
+                {Object.keys(projectScripts).length > 3 && (
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      className="discussion-script-btn more-btn"
+                      title="More npm scripts..."
+                      onClick={() => setShowScriptsMenu(!showScriptsMenu)}
+                    >
+                      <TerminalIcon size={11} color="#60a5fa" />
+                      <span>+{Object.keys(projectScripts).length - 3} scripts</span>
+                      <ChevronDown size={10} />
+                    </button>
+
+                    {showScriptsMenu && (
+                      <div className="discussion-scripts-dropdown">
+                        <div className="discussion-dropdown-title">npm scripts</div>
+                        {Object.entries(projectScripts).slice(3).map(([scriptName, scriptCmd]) => (
+                          <button
+                            key={scriptName}
+                            className="discussion-dropdown-item"
+                            onClick={() => {
+                              setShowScriptsMenu(false);
+                              onRunScript?.(scriptName, scriptCmd);
+                            }}
+                            title={scriptCmd}
+                          >
+                            <Play size={11} color="#10b981" />
+                            <span className="agent-item-name" style={{ fontFamily: 'monospace' }}>
+                              {scriptName}
+                            </span>
+                            <span style={{ fontSize: 9, color: '#64748b', marginLeft: 'auto', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {scriptCmd}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

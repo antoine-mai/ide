@@ -3164,40 +3164,60 @@ body {
   font-style: italic;
 }
 
-.discussion-add-agent-wrap {
-  position: relative;
+/* Scripts Bar in Discussion Header */
+.discussion-scripts-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-
-
-
-.discussion-add-agent-btn {
+.discussion-script-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background-color: #1f232d;
-  border: 1px solid #2d3342;
-  color: #60a5fa;
+  background-color: #171b26;
+  border: 1px solid #232c3f;
+  color: #e2e8f0;
   font-size: 11px;
   font-weight: 500;
-  padding: 4px 8px;
+  padding: 2px 7px;
+  height: 24px;
   cursor: pointer;
-  transition: all 0.1s ease;
+  border-radius: 0;
+  transition: all 0.12s ease;
+  white-space: nowrap;
 }
 
-
-
-
-.discussion-add-agent-btn:hover {
-  background-color: #272d3b;
+.discussion-script-btn:hover {
+  background-color: #1e2638;
   border-color: #3b82f6;
-  color: #93c5fd;
+  color: #ffffff;
 }
 
+.discussion-script-btn.more-btn {
+  background-color: #161822;
+  color: #94a3b8;
+  border-color: #2b2f3d;
+}
 
+.discussion-script-btn.more-btn:hover {
+  background-color: #1f2330;
+  color: #c7d2fe;
+}
 
-
-.discussion-add-agent-dropdown {
+.discussion-scripts-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 250px;
+  background-color: #181a20;
+  border: 1px solid #2b2e38;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
   position: absolute;
   top: calc(100% + 4px);
   right: 0;

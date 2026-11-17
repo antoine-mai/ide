@@ -40,6 +40,7 @@ interface OpenTab {
   title?: string;
   filePath?: string;
   cwd?: string;
+  initialCommand?: string;
   selectedAIId?: string | null;
   sessionId?: string;
   settingsSection?: 'commonly_used' | 'agents' | 'editor' | 'terminal' | 'ai_orchestrator';
@@ -416,7 +417,7 @@ export default function App() {
     });
   };
 
-  const handleOpenNewTerminal = (customCwd?: string, customTitle?: string) => {
+  const handleOpenNewTerminal = (customCwd?: string, customTitle?: string, initialCommand?: string) => {
     updateCurrentProjectState((st) => {
       const newIndex = st.openTabs.filter((t) => t.type === 'terminal').length + 1;
       const tabId = `term-${activeProjectId}-${Date.now()}`;
@@ -432,6 +433,7 @@ export default function App() {
             title,
             sessionId: tabId,
             cwd: customCwd,
+            initialCommand,
           },
         ],
         activeTabId: tabId,
@@ -497,12 +499,62 @@ export default function App() {
     if (openDropdownTabId === tabId) {
       setOpenDropdownTabId(null);
     }
-    updateCurrentProjectState((st) => ({
-      ...st,
-      openTabs: st.openTabs.filter((t) => t.id !== tabId),
-      activeTabId: st.activeTabId === tabId ? 'primary-agent' : st.activeTabId,
-    }));
+    updateCurrentProjectState((st) => {
+      const remainingTabs = st.openTabs.filter((t) => t.id !== tabId);
+      let nextActiveId = st.activeTabId;
+
+      if (st.activeTabId === tabId) {
+        // If closing the active tab, find its index and switch to adjacent tab or primary-agent
+        const closedIdx = st.openTabs.findIndex((t) => t.id === tabId);
+        if (remainingTabs.length > 0) {
+          const newIdx = Math.max(0, closedIdx - 1);
+          nextActiveId = remainingTabs[newIdx]?.id || 'primary-agent';
+        } else {
+          nextActiveId = 'primary-agent';
+        }
+      }
+
+      return {
+        ...st,
+        openTabs: remainingTabs,
+        activeTabId: nextActiveId,
+      };
+    });
   };
+
+  // Global Keyboard Shortcuts (Ctrl+W, Ctrl+T, Ctrl+B, etc.)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+      // Ctrl+W / Cmd+W: Close active tab
+      if (isCtrlOrCmd && (e.key === 'w' || e.key === 'W')) {
+        // Don't close window if there's an active tab to close
+        if (activeTabId && activeTabId !== 'primary-agent') {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCloseTab(activeTabId);
+        }
+      }
+
+      // Ctrl+B / Cmd+B: Toggle Right Sidebar (Explorer/Tasks)
+      if (isCtrlOrCmd && (e.key === 'b' || e.key === 'B')) {
+        e.preventDefault();
+        setShowRightbar((prev) => !prev);
+      }
+
+      // Ctrl+` (Backtick): Open new terminal tab
+      if (isCtrlOrCmd && e.key === '`') {
+        e.preventDefault();
+        handleOpenNewTerminal();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [activeTabId, openTabs]);
 
   const handleSelectTabAI = (tabId: string, aiId: string) => {
     updateCurrentProjectState((st) => {
@@ -944,6 +996,9 @@ export default function App() {
                       }
                       onToggleAgent={handleToggleDiscussionAgent}
                       onOpenManageAgents={handleOpenManageAgents}
+                      onRunScript={(scriptName) => {
+                        handleOpenNewTerminal(proj.path, `${proj.name}: ${scriptName}`, `npm run ${scriptName}`);
+                      }}
                       projectBadge={getProjectBadgeText(proj.name)}
                     />
                   </div>
@@ -966,6 +1021,8 @@ export default function App() {
                           <TerminalTab
                             sessionId={tab.sessionId || tab.id}
                             cwd={tab.cwd || proj.path}
+                            settings={appSettings}
+                            initialCommand={tab.initialCommand}
                           />
                         ) : tab.type === 'agent' ? (
                           (() => {
@@ -992,7 +1049,7 @@ export default function App() {
                             );
                           })()
                         ) : tab.type === 'file' && tab.filePath ? (
-                          <FileEditorTab filePath={tab.filePath} />
+                          <FileEditorTab filePath={tab.filePath} settings={appSettings} />
                         ) : tab.type === 'manage_agents' ? (
                           <ManageAgentsTab
                             agents={installedAIs}

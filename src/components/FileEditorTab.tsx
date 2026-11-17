@@ -6,12 +6,14 @@ import {
   FileCode,
   RotateCw,
 } from 'lucide-react';
+import { AppSettings, DEFAULT_APP_SETTINGS } from '../types/settings';
 
 // Configure Monaco to use locally bundled monaco-editor instead of external CDN
 loader.config({ monaco });
 
 interface FileEditorTabProps {
   filePath: string;
+  settings?: AppSettings;
 }
 
 // Map file extensions to Monaco language identifiers
@@ -82,7 +84,8 @@ function getLanguageFromPath(path: string): string {
   }
 }
 
-export const FileEditorTab: React.FC<FileEditorTabProps> = ({ filePath }) => {
+export const FileEditorTab: React.FC<FileEditorTabProps> = ({ filePath, settings }) => {
+  const currentSettings = settings || DEFAULT_APP_SETTINGS;
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -263,23 +266,25 @@ export const FileEditorTab: React.FC<FileEditorTabProps> = ({ filePath }) => {
           }}
           onMount={handleEditorDidMount}
           options={{
-            fontFamily: "'JetBrains Mono', Consolas, Monaco, 'Courier New', monospace",
-            fontSize: 13,
-            lineHeight: 20,
+            fontFamily: currentSettings.editorFontFamily,
+            fontSize: currentSettings.editorFontSize,
+            lineHeight: currentSettings.editorLineHeight || 20,
+            fontWeight: currentSettings.editorFontWeight || 'normal',
             minimap: {
-              enabled: true,
+              enabled: currentSettings.editorMinimap,
               maxColumn: 80,
               renderCharacters: false,
             },
             scrollBeyondLastLine: false,
             automaticLayout: true,
-            tabSize: 2,
+            tabSize: currentSettings.editorTabSize || 2,
             insertSpaces: true,
-            lineNumbers: 'on',
+            lineNumbers: currentSettings.editorLineNumbers || 'on',
+            wordWrap: currentSettings.editorWordWrap || 'off',
             renderWhitespace: 'selection',
             folding: true,
             bracketPairColorization: {
-              enabled: true,
+              enabled: currentSettings.editorBracketPairColorization,
             },
             cursorBlinking: 'smooth',
             cursorSmoothCaretAnimation: 'on',
