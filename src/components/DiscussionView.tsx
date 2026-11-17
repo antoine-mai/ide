@@ -990,18 +990,8 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
 
         {/* Right side: 2-Row Action Bars (Top: Project & Script Actions | Bottom: Git Controls) */}
         <div className="discussion-header-right">
-          {/* Row 1 (Top): Project Actions, Supervisor/Roles, Agents & npm scripts */}
+          {/* Row 1 (Top): Project Actions, npm scripts & history */}
           <div className="discussion-header-row top-row">
-            {/* Roles & Supervisor Modal Trigger */}
-            <button
-              className="discussion-header-icon-btn"
-              title={`Configure Roles & Supervisor (${roles.length} roles)`}
-              onClick={() => setIsRoleModalOpen(true)}
-            >
-              <Sliders size={12} color="#a5b4fc" />
-              <span className="discussion-btn-text">Roles ({roles.length})</span>
-            </button>
-
             {/* Clear History Button */}
             {messages.length > 0 && (
               <button
@@ -1174,46 +1164,37 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
           </div>
         </div>
 
-        {/* Agents Panel – right column */}
+        {/* Roles & Agents Column – right side of header */}
         <div className="discussion-header-agents">
-          <div className="discussion-header-agents-label">
-            <Bot size={11} color="#60a5fa" />
-            <span>Agents</span>
-          </div>
-          <div className="discussion-header-agents-list">
-            {assignedAgents.length === 0 ? (
+          {/* Top row: Roles modal trigger button */}
+          <button
+            className="discussion-header-roles-btn"
+            title={`Configure Roles & Supervisor (${roles.length} roles)`}
+            onClick={() => setIsRoleModalOpen(true)}
+          >
+            <Sliders size={12} color="#a5b4fc" />
+            <span>Roles ({roles.length})</span>
+          </button>
+
+          {/* Bottom row: Agent icon buttons (no label) */}
+          <div className="discussion-header-agents-icons">
+            {assignedAgents.map((ag) => (
               <button
-                className="discussion-header-agents-add"
-                title="Assign agents to this project"
-                onClick={onOpenManageAgents}
+                key={ag.id}
+                className="discussion-agent-icon-btn"
+                title={`${ag.name} (${ag.command})\nClick to mention in chat or manage`}
+                onClick={() => handleSelectMention(ag)}
               >
-                <Plus size={11} />
-                <span>Add agent</span>
+                <Bot size={13} color="#60a5fa" />
               </button>
-            ) : (
-              <>
-                {assignedAgents.map((ag) => (
-                  <div key={ag.id} className="discussion-agent-pill" title={`${ag.name} (${ag.command})`}>
-                    <Bot size={11} color="#60a5fa" />
-                    <span className="discussion-agent-pill-name">{ag.name}</span>
-                    <button
-                      className="discussion-agent-pill-remove"
-                      title={`Remove ${ag.name}`}
-                      onClick={() => onToggleAgent(ag.id)}
-                    >
-                      <X size={10} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  className="discussion-header-agents-add"
-                  title="Add more agents"
-                  onClick={onOpenManageAgents}
-                >
-                  <Plus size={11} />
-                </button>
-              </>
-            )}
+            ))}
+            <button
+              className="discussion-agent-icon-btn add-btn"
+              title="Add or manage agents"
+              onClick={onOpenManageAgents}
+            >
+              <Plus size={12} color="#94a3b8" />
+            </button>
           </div>
         </div>
       </div>
