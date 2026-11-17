@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.zerous.app",
+  "productName": "Zerous",
+  "directories": {
+    "output": "release"
+  },
+  "npmRebuild": false,
+  "files": [
+    "dist/**/*",
+    "dist-electron/**/*",
+    "package.json",
+    "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+    "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+    "!**/node_modules/*.d.ts",
+    "!**/node_modules/.bin",
+    "!**/*.{o,h,obj,cc}"
+  ],
+  "asarUnpack": [
+    "**/node_modules/node-pty/**"
+  ],
+  "linux": {
+    "target": ["AppImage", "deb", "tar.gz"],
+    "category": "Development",
+    "icon": "build/icons"
+  },
+  "mac": {
+    "target": ["dmg", "zip"],
+    "category": "public.app-category.developer-tools",
+    "icon": "build/icon.png"
+  },
+  "win": {
+    "target": ["nsis", "zip"],
+    "icon": "build/icon.ico"
+  }
+}

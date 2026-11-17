@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-electron
+release
+.env
+.DS_Store
+.zerous/agent-contexts/
+.zerous/data/
+.zerous/discussions/
+.zerous/history/

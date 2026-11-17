@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <g fill="none" stroke-width="66" stroke-linejoin="miter" stroke-miterlimit="10">
+    <!-- Tam giác hướng lên (Xám đậm / Carbon) -->
+    <polygon points="256,56 429.2,356 82.8,356" stroke="#52525b" />
+    <!-- Tam giác hướng xuống (Cam rực rỡ) -->
+    <polygon points="256,456 82.8,156 429.2,156" stroke="#FF5A00" />
+    <!-- Đan xen (Overpass để 2 tam giác lồng vào nhau) -->
+    <line x1="256" y1="56" x2="342.6" y2="206" stroke="#52525b" stroke-linecap="butt" />
+    <line x1="429.2" y1="356" x2="256" y2="356" stroke="#52525b" stroke-linecap="butt" />
+    <line x1="82.8" y1="356" x2="169.4" y2="206" stroke="#52525b" stroke-linecap="butt" />
+  </g>
+</svg>
