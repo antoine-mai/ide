@@ -999,6 +999,8 @@ export default function App() {
                       onRunScript={(scriptName) => {
                         handleOpenNewTerminal(proj.path, `${proj.name}: ${scriptName}`, `npm run ${scriptName}`);
                       }}
+                      onOpenGitModal={openGitModalWithTab}
+                      gitDetails={isProjActive ? activeProjectGit : undefined}
                       projectBadge={getProjectBadgeText(proj.name)}
                     />
                   </div>

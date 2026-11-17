@@ -2943,7 +2943,7 @@ body {
 
 
 .discussion-header {
-  height: 48px;
+  height: 68px;
   background-color: #16181f;
   border-bottom: 1px solid #232630;
   display: flex;
@@ -2954,9 +2954,6 @@ body {
   z-index: 10;
 }
 
-
-
-
 .discussion-header-left {
   display: flex;
   align-items: center;
@@ -2964,16 +2961,13 @@ body {
   min-width: 0;
 }
 
-
-
-
 .discussion-project-badge {
-  width: 32px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   background-color: #262c3d;
   color: #60a5fa;
   border: 1px solid #3b82f640;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -2982,20 +2976,14 @@ body {
   letter-spacing: 0.5px;
 }
 
-
-
-
 .discussion-project-info {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-
-
-
 .discussion-project-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #f1f3f7;
   white-space: nowrap;
@@ -3003,20 +2991,14 @@ body {
   text-overflow: ellipsis;
 }
 
-
-
-
 .discussion-project-meta {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 11px;
   color: #717582;
-  margin-top: 1px;
+  margin-top: 3px;
 }
-
-
-
 
 .discussion-project-path {
   display: flex;
@@ -3027,9 +3009,6 @@ body {
   text-overflow: ellipsis;
   max-width: 280px;
 }
-
-
-
 
 .discussion-git-badge {
   display: inline-flex;
@@ -3042,30 +3021,103 @@ body {
   color: #94a3b8;
 }
 
-
-
-
 .discussion-git-badge.dirty {
   color: #f59e0b;
   border-color: #78350f;
 }
-
-
-
 
 .discussion-git-badge .git-dot {
   font-size: 8px;
   color: #f59e0b;
 }
 
-
-
-
+/* Discussion Header Right (2-Row Layout) */
 .discussion-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.discussion-header-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+}
+
+.discussion-header-row.top-row {
+  height: 24px;
+}
+
+.discussion-header-row.bottom-row {
+  height: 24px;
+}
+
+/* Git Action Buttons in Header Row 2 */
+.discussion-git-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  background-color: #12141a;
+  border: 1px solid #262934;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.discussion-git-action-btn:hover {
+  background-color: #1c202a;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.discussion-git-action-btn.branch-btn {
+  color: #93c5fd;
+  border-color: #2a344a;
+}
+
+.discussion-git-action-btn.branch-btn:hover {
+  background-color: #1b263b;
+  color: #ffffff;
+}
+
+.discussion-git-action-btn.dirty {
+  color: #f59e0b;
+  border-color: #78350f;
+}
+
+.discussion-git-action-btn.sync-btn {
+  color: #38bdf8;
+  background-color: #10212e;
+  border-color: #1a425f;
+  gap: 6px;
+}
+
+.discussion-git-action-btn.sync-btn:hover {
+  background-color: #163249;
+}
+
+.git-sync-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.discussion-no-git-notice {
+  font-size: 10px;
+  color: #64748b;
+  font-style: italic;
+  padding: 2px 6px;
 }
 
 .discussion-header-divider {

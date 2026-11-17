@@ -21,6 +21,9 @@ import {
   AtSign,
   Play,
   Terminal as TerminalIcon,
+  GitCommit,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { InstalledAI } from './ManageAgentsModal';
 import { AgentRole, SupervisorConfig } from '../types/agent-roles';
@@ -87,6 +90,15 @@ interface DiscussionViewProps {
   onToggleAgent: (agentId: string) => void;
   onOpenManageAgents: () => void;
   onRunScript?: (scriptName: string, scriptCmd: string) => void;
+  onOpenGitModal?: (tab: 'changes' | 'branches' | 'history') => void;
+  gitDetails?: {
+    isRepo: boolean;
+    branch: string;
+    isDirty: boolean;
+    ahead: number;
+    behind: number;
+    changeCount: number;
+  };
   projectBadge: string;
 }
 
@@ -109,6 +121,8 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   onToggleAgent,
   onOpenManageAgents,
   onRunScript,
+  onOpenGitModal,
+  gitDetails,
   projectBadge,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -848,117 +862,179 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
           </div>
         </div>
 
-        {/* Right side: Roles & Rules Button + Assigned Agents + Add Agent Dropdown */}
+        {/* Right side: 2-Row Action Bars (Top: Project & Script Actions | Bottom: Git Controls) */}
         <div className="discussion-header-right">
-          {/* Roles & Supervisor Modal Trigger */}
-          <button
-            className="discussion-header-icon-btn"
-            title={`Configure Roles & Supervisor (${roles.length} roles)`}
-            onClick={() => setIsRoleModalOpen(true)}
-          >
-            <Sliders size={13} color="#a5b4fc" />
-            <span className="discussion-btn-text">Roles ({roles.length})</span>
-          </button>
-
-          {/* Clear History Button */}
-          {messages.length > 0 && (
+          {/* Row 1 (Top): Project Actions, Supervisor/Roles, Agents & npm scripts */}
+          <div className="discussion-header-row top-row">
+            {/* Roles & Supervisor Modal Trigger */}
             <button
               className="discussion-header-icon-btn"
-              title="Clear discussion history"
-              onClick={handleClearHistory}
+              title={`Configure Roles & Supervisor (${roles.length} roles)`}
+              onClick={() => setIsRoleModalOpen(true)}
             >
-              <Trash2 size={13} color="#9ca3af" />
+              <Sliders size={12} color="#a5b4fc" />
+              <span className="discussion-btn-text">Roles ({roles.length})</span>
             </button>
-          )}
 
-          <div className="discussion-header-divider" />
-
-          {/* Assigned Agents Pill List */}
-          <div className="discussion-agents-list">
-            {assignedAgents.slice(0, 3).map((ag) => (
-              <div key={ag.id} className="discussion-agent-pill" title={`${ag.name} (${ag.command})`}>
-                <Bot size={12} color="#60a5fa" />
-                <span className="discussion-agent-pill-name">{ag.name}</span>
-                <button
-                  className="discussion-agent-pill-remove"
-                  title={`Remove ${ag.name}`}
-                  onClick={() => onToggleAgent(ag.id)}
-                >
-                  <X size={10} />
-                </button>
-              </div>
-            ))}
-
-            {assignedAgents.length > 3 && (
-              <span
-                className="discussion-agent-pill more-pill"
-                title={assignedAgents.slice(3).map((a) => a.name).join(', ')}
+            {/* Clear History Button */}
+            {messages.length > 0 && (
+              <button
+                className="discussion-header-icon-btn"
+                title="Clear discussion history"
+                onClick={handleClearHistory}
               >
-                +{assignedAgents.length - 3}
-              </span>
+                <Trash2 size={12} color="#9ca3af" />
+              </button>
+            )}
+
+            <div className="discussion-header-divider" />
+
+            {/* Assigned Agents Pill List */}
+            <div className="discussion-agents-list">
+              {assignedAgents.slice(0, 3).map((ag) => (
+                <div key={ag.id} className="discussion-agent-pill" title={`${ag.name} (${ag.command})`}>
+                  <Bot size={11} color="#60a5fa" />
+                  <span className="discussion-agent-pill-name">{ag.name}</span>
+                  <button
+                    className="discussion-agent-pill-remove"
+                    title={`Remove ${ag.name}`}
+                    onClick={() => onToggleAgent(ag.id)}
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+
+              {assignedAgents.length > 3 && (
+                <span
+                  className="discussion-agent-pill more-pill"
+                  title={assignedAgents.slice(3).map((a) => a.name).join(', ')}
+                >
+                  +{assignedAgents.length - 3}
+                </span>
+              )}
+            </div>
+
+            {/* Smart Node.js Project Scripts Buttons */}
+            {Object.keys(projectScripts).length > 0 && (
+              <>
+                <div className="discussion-header-divider" />
+                <div className="discussion-scripts-bar" ref={scriptsRef}>
+                  {Object.entries(projectScripts).slice(0, 3).map(([scriptName, scriptCmd]) => (
+                    <button
+                      key={scriptName}
+                      className="discussion-script-btn"
+                      title={`Run 'npm run ${scriptName}' in terminal\nCommand: ${scriptCmd}`}
+                      onClick={() => onRunScript?.(scriptName, scriptCmd)}
+                    >
+                      <Play size={10} color="#10b981" />
+                      <span>{scriptName}</span>
+                    </button>
+                  ))}
+
+                  {Object.keys(projectScripts).length > 3 && (
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        className="discussion-script-btn more-btn"
+                        title="More npm scripts..."
+                        onClick={() => setShowScriptsMenu(!showScriptsMenu)}
+                      >
+                        <TerminalIcon size={11} color="#60a5fa" />
+                        <span>+{Object.keys(projectScripts).length - 3}</span>
+                        <ChevronDown size={10} />
+                      </button>
+
+                      {showScriptsMenu && (
+                        <div className="discussion-scripts-dropdown">
+                          <div className="discussion-dropdown-title">npm scripts</div>
+                          {Object.entries(projectScripts).slice(3).map(([scriptName, scriptCmd]) => (
+                            <button
+                              key={scriptName}
+                              className="discussion-dropdown-item"
+                              onClick={() => {
+                                setShowScriptsMenu(false);
+                                onRunScript?.(scriptName, scriptCmd);
+                              }}
+                              title={scriptCmd}
+                            >
+                              <Play size={11} color="#10b981" />
+                              <span className="agent-item-name" style={{ fontFamily: 'monospace' }}>
+                                {scriptName}
+                              </span>
+                              <span style={{ fontSize: 9, color: '#64748b', marginLeft: 'auto', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {scriptCmd}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
 
-          {/* Smart Node.js Project Scripts Buttons */}
-          {Object.keys(projectScripts).length > 0 && (
-            <>
-              <div className="discussion-header-divider" />
-              <div className="discussion-scripts-bar" ref={scriptsRef}>
-                {/* Display up to 3 primary scripts as direct quick-run buttons */}
-                {Object.entries(projectScripts).slice(0, 3).map(([scriptName, scriptCmd]) => (
+          {/* Row 2 (Bottom): Git Actions (Branch, Status, Changes, History, Sync) */}
+          <div className="discussion-header-row bottom-row">
+            {gitInfo.isRepo || gitDetails?.isRepo ? (
+              <>
+                {/* Branch Switcher Button */}
+                <button
+                  className="discussion-git-action-btn branch-btn"
+                  title="Switch or view Git branches"
+                  onClick={() => onOpenGitModal?.('branches')}
+                >
+                  <GitBranch size={11} color="#60a5fa" />
+                  <span>{gitDetails?.branch || gitInfo.branch || 'main'}</span>
+                </button>
+
+                {/* Changes / Diff Reviewer Button */}
+                <button
+                  className={`discussion-git-action-btn ${(gitDetails?.isDirty || gitInfo.isDirty) ? 'dirty' : ''}`}
+                  title="View Git Changes & Diff"
+                  onClick={() => onOpenGitModal?.('changes')}
+                >
+                  <FileText size={11} color={(gitDetails?.isDirty || gitInfo.isDirty) ? '#f59e0b' : '#10b981'} />
+                  <span>{(gitDetails?.isDirty || gitInfo.isDirty) ? `${gitDetails?.changeCount || 'Modified'} changes` : 'Clean'}</span>
+                </button>
+
+                {/* Ahead / Behind Sync Info */}
+                {((gitDetails?.ahead ?? 0) > 0 || (gitDetails?.behind ?? 0) > 0) && (
                   <button
-                    key={scriptName}
-                    className="discussion-script-btn"
-                    title={`Run 'npm run ${scriptName}' in terminal\nCommand: ${scriptCmd}`}
-                    onClick={() => onRunScript?.(scriptName, scriptCmd)}
+                    className="discussion-git-action-btn sync-btn"
+                    title="Pull/Push changes with remote repository"
+                    onClick={() => onOpenGitModal?.('changes')}
                   >
-                    <Play size={10} color="#10b981" />
-                    <span>{scriptName}</span>
-                  </button>
-                ))}
-
-                {/* More scripts dropdown if more than 3 */}
-                {Object.keys(projectScripts).length > 3 && (
-                  <div style={{ position: 'relative' }}>
-                    <button
-                      className="discussion-script-btn more-btn"
-                      title="More npm scripts..."
-                      onClick={() => setShowScriptsMenu(!showScriptsMenu)}
-                    >
-                      <TerminalIcon size={11} color="#60a5fa" />
-                      <span>+{Object.keys(projectScripts).length - 3} scripts</span>
-                      <ChevronDown size={10} />
-                    </button>
-
-                    {showScriptsMenu && (
-                      <div className="discussion-scripts-dropdown">
-                        <div className="discussion-dropdown-title">npm scripts</div>
-                        {Object.entries(projectScripts).slice(3).map(([scriptName, scriptCmd]) => (
-                          <button
-                            key={scriptName}
-                            className="discussion-dropdown-item"
-                            onClick={() => {
-                              setShowScriptsMenu(false);
-                              onRunScript?.(scriptName, scriptCmd);
-                            }}
-                            title={scriptCmd}
-                          >
-                            <Play size={11} color="#10b981" />
-                            <span className="agent-item-name" style={{ fontFamily: 'monospace' }}>
-                              {scriptName}
-                            </span>
-                            <span style={{ fontSize: 9, color: '#64748b', marginLeft: 'auto', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {scriptCmd}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
+                    {(gitDetails?.behind ?? 0) > 0 && (
+                      <span className="git-sync-item">
+                        <ArrowDown size={10} color="#38bdf8" />
+                        <span>{gitDetails?.behind}</span>
+                      </span>
                     )}
-                  </div>
+                    {(gitDetails?.ahead ?? 0) > 0 && (
+                      <span className="git-sync-item">
+                        <ArrowUp size={10} color="#38bdf8" />
+                        <span>{gitDetails?.ahead}</span>
+                      </span>
+                    )}
+                  </button>
                 )}
-              </div>
-            </>
-          )}
+
+                {/* Commit History Button */}
+                <button
+                  className="discussion-git-action-btn"
+                  title="View Commit History"
+                  onClick={() => onOpenGitModal?.('history')}
+                >
+                  <GitCommit size={11} color="#94a3b8" />
+                  <span>History</span>
+                </button>
+              </>
+            ) : (
+              <span className="discussion-no-git-notice">No Git repository detected</span>
+            )}
+          </div>
         </div>
       </div>
 
