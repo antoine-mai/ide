@@ -74,6 +74,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('git-pull', projectPath),
   gitPush: (projectPath: string) =>
     ipcRenderer.invoke('git-push', projectPath),
+  gitRevert: (projectPath: string) =>
+    ipcRenderer.invoke('git-revert', projectPath),
   gitGetLog: (projectPath: string, limit?: number) =>
     ipcRenderer.invoke('git-get-log', { projectPath, limit }),
 

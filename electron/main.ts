@@ -619,6 +619,20 @@ ipcMain.handle('git-push', async (_event, projectPath: string) => {
   }
 });
 
+ipcMain.handle('git-revert', async (_event, projectPath: string) => {
+  try {
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
+    // Discard all uncommitted changes (both tracked & untracked)
+    await execAsync('git restore .', { cwd: projectPath });
+    await execAsync('git clean -fd', { cwd: projectPath });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || err };
+  }
+});
+
 ipcMain.handle('git-get-log', async (_event, { projectPath, limit = 20 }: { projectPath: string; limit?: number }) => {
   try {
     const { exec } = await import('child_process');

@@ -44,6 +44,7 @@ export interface ElectronAPI {
   gitCreateBranch: (projectPath: string, branch: string) => Promise<{ success: boolean; error?: string }>;
   gitPull: (projectPath: string) => Promise<{ success: boolean; output?: string; error?: string }>;
   gitPush: (projectPath: string) => Promise<{ success: boolean; output?: string; error?: string }>;
+  gitRevert: (projectPath: string) => Promise<{ success: boolean; error?: string }>;
   gitGetLog: (projectPath: string, limit?: number) => Promise<{ success: boolean; commits: any[]; error?: string }>;
 
   // Terminal PTY

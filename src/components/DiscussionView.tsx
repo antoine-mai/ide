@@ -9,7 +9,6 @@ import {
   Plus,
   X,
   FileText,
-  GitBranch,
   Folder,
   Sparkles,
   Target,
@@ -21,10 +20,10 @@ import {
   AtSign,
   Play,
   Terminal as TerminalIcon,
-  GitCommit,
   UploadCloud,
   DownloadCloud,
   Check,
+  Undo2,
 } from 'lucide-react';
 import { InstalledAI } from './ManageAgentsModal';
 import { AgentRole, SupervisorConfig } from '../types/agent-roles';
@@ -122,7 +121,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   onToggleAgent,
   onOpenManageAgents,
   onRunScript,
-  onOpenGitModal,
+  onOpenGitModal: _onOpenGitModal,
   gitDetails,
   projectBadge,
 }) => {
@@ -174,7 +173,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   }, [project.path]);
 
   // Git Quick Actions loading state & feedback
-  const [gitActionLoading, setGitActionLoading] = useState<'pull' | 'push' | 'commit' | null>(null);
+  const [gitActionLoading, setGitActionLoading] = useState<'pull' | 'push' | 'commit' | 'revert' | null>(null);
   const [gitActionMessage, setGitActionMessage] = useState<string | null>(null);
 
   const handleQuickGitPull = async () => {
@@ -232,6 +231,29 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
       }
     } catch (e: any) {
       setGitActionMessage(`Commit error: ${e?.message || e}`);
+    } finally {
+      setGitActionLoading(null);
+      setTimeout(() => setGitActionMessage(null), 4000);
+    }
+  };
+
+  const handleQuickGitRevert = async () => {
+    if (!project.path || gitActionLoading) return;
+    if (!window.confirm(`Are you sure you want to revert all uncommitted changes in ${project.name}?\nThis action cannot be undone.`)) {
+      return;
+    }
+
+    setGitActionLoading('revert');
+    setGitActionMessage(null);
+    try {
+      const res = await window.electronAPI?.gitRevert?.(project.path);
+      if (res?.success) {
+        setGitActionMessage('All changes reverted');
+      } else {
+        setGitActionMessage(res?.error ? `Revert error: ${res.error}` : 'Revert failed');
+      }
+    } catch (e: any) {
+      setGitActionMessage(`Revert error: ${e?.message || e}`);
     } finally {
       setGitActionLoading(null);
       setTimeout(() => setGitActionMessage(null), 4000);
@@ -1034,7 +1056,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             )}
           </div>
 
-          {/* Row 2 (Bottom): Git Actions (Commit, Push, Pull, Sync, Branch Switcher, Changes) */}
+          {/* Row 2 (Bottom): Git Actions (Pull, Push, Commit, Revert) */}
           <div className="discussion-header-row bottom-row">
             {gitInfo.isRepo || gitDetails?.isRepo ? (
               <>
@@ -1071,6 +1093,17 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                   <span>{gitActionLoading === 'commit' ? 'Committing...' : 'Commit'}</span>
                 </button>
 
+                {/* Quick Git Revert Action Button */}
+                <button
+                  className="discussion-git-action-btn revert-btn"
+                  title="Git Revert: Discard all uncommitted changes"
+                  disabled={gitActionLoading !== null}
+                  onClick={handleQuickGitRevert}
+                >
+                  <Undo2 size={11} color="#ef4444" />
+                  <span>{gitActionLoading === 'revert' ? 'Reverting...' : 'Revert'}</span>
+                </button>
+
                 {/* Feedback message banner if any */}
                 {gitActionMessage && (
                   <span
@@ -1079,38 +1112,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                     {gitActionMessage}
                   </span>
                 )}
-
-                <div className="discussion-header-divider" />
-
-                {/* Branches Modal Action */}
-                <button
-                  className="discussion-git-action-btn branch-btn"
-                  title="Switch or view Git branches"
-                  onClick={() => onOpenGitModal?.('branches')}
-                >
-                  <GitBranch size={11} color="#60a5fa" />
-                  <span>Branches</span>
-                </button>
-
-                {/* Changes / Diff Reviewer Action */}
-                <button
-                  className="discussion-git-action-btn"
-                  title="View Git Changes & Diff"
-                  onClick={() => onOpenGitModal?.('changes')}
-                >
-                  <FileText size={11} color="#94a3b8" />
-                  <span>Changes</span>
-                </button>
-
-                {/* Commit History Action */}
-                <button
-                  className="discussion-git-action-btn"
-                  title="View Commit History"
-                  onClick={() => onOpenGitModal?.('history')}
-                >
-                  <GitCommit size={11} color="#94a3b8" />
-                  <span>History</span>
-                </button>
               </>
             ) : (
               <span className="discussion-no-git-notice">No Git repository detected</span>
