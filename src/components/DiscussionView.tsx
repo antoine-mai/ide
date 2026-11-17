@@ -988,63 +988,16 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
           </div>
         </div>
 
-        {/* Right side: 2-Row Action Bars (Top: Project & Script Actions | Bottom: Git Controls) */}
-        <div className="discussion-header-right">
-          {/* Row 1 (Top): Project Actions, npm scripts & history */}
-          <div className="discussion-header-row top-row">
-            {/* Clear History Button */}
-            {messages.length > 0 && (
-              <button
-                className="discussion-header-icon-btn"
-                title="Clear discussion history"
-                onClick={handleClearHistory}
-              >
-                <Trash2 size={12} color="#9ca3af" />
-              </button>
-            )}
-
-            {/* Dev Log Button (git commit log) */}
-            {(gitInfo.isRepo || gitDetails?.isRepo) && (
-              <div style={{ position: 'relative' }} ref={devLogRef}>
-                <button
-                  className={`discussion-header-icon-btn ${showDevLog ? 'active' : ''}`}
-                  title="Dev Log – Git commit history"
-                  onClick={handleOpenDevLog}
-                >
-                  <ScrollText size={12} color={showDevLog ? '#60a5fa' : '#9ca3af'} />
-                  <span className="discussion-btn-text">Dev Log</span>
-                </button>
-
-                {showDevLog && (
-                  <div className="discussion-devlog-dropdown">
-                    <div className="discussion-dropdown-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <ScrollText size={12} color="#60a5fa" />
-                      Git Commit Log
-                    </div>
-                    {devLogLoading ? (
-                      <div className="discussion-devlog-loading">Loading commits...</div>
-                    ) : devLogCommits.length === 0 ? (
-                      <div className="discussion-devlog-loading">No commits found.</div>
-                    ) : (
-                      <div className="discussion-devlog-list">
-                        {devLogCommits.map((c) => (
-                          <div key={c.hash} className="discussion-devlog-item">
-                            <span className="devlog-hash">{c.shortHash}</span>
-                            <span className="devlog-msg" title={c.message}>{c.message}</span>
-                            <span className="devlog-meta">{c.author} · {c.relativeTime}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Smart Node.js Project Scripts Buttons */}
-            {Object.keys(projectScripts).length > 0 && (
-              <>
-                <div className="discussion-header-divider" />
+        {/* 3 Explicit Header Zones: SCRIPTS | GIT | AGENTS */}
+        <div className="discussion-header-zones">
+          {/* Zone 1: Scripts */}
+          <div className="discussion-header-zone zone-scripts">
+            <div className="discussion-zone-title">
+              <TerminalIcon size={10} color="#10b981" />
+              <span>Scripts</span>
+            </div>
+            <div className="discussion-zone-content">
+              {Object.keys(projectScripts).length > 0 ? (
                 <div className="discussion-scripts-bar" ref={scriptsRef}>
                   {Object.entries(projectScripts).slice(0, 3).map(([scriptName, scriptCmd]) => (
                     <button
@@ -1065,9 +1018,9 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                         title="More npm scripts..."
                         onClick={() => setShowScriptsMenu(!showScriptsMenu)}
                       >
-                        <TerminalIcon size={11} color="#60a5fa" />
+                        <TerminalIcon size={10} color="#60a5fa" />
                         <span>+{Object.keys(projectScripts).length - 3}</span>
-                        <ChevronDown size={10} />
+                        <ChevronDown size={9} />
                       </button>
 
                       {showScriptsMenu && (
@@ -1097,105 +1050,161 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                     </div>
                   )}
                 </div>
-              </>
-            )}
+              ) : (
+                <span className="discussion-zone-empty">No scripts</span>
+              )}
+            </div>
           </div>
 
-          {/* Row 2 (Bottom): Git Actions (Pull, Push, Commit, Revert) */}
-          <div className="discussion-header-row bottom-row">
-            {gitInfo.isRepo || gitDetails?.isRepo ? (
-              <>
-                {/* Quick Git Pull Action Button */}
-                <button
-                  className="discussion-git-action-btn pull-btn"
-                  title="Git Pull: Fetch and merge remote changes"
-                  disabled={gitActionLoading !== null}
-                  onClick={handleQuickGitPull}
-                >
-                  <DownloadCloud size={11} color="#38bdf8" />
-                  <span>{gitActionLoading === 'pull' ? 'Pulling...' : 'Pull'}</span>
-                </button>
-
-                {/* Quick Git Push Action Button */}
-                <button
-                  className="discussion-git-action-btn push-btn"
-                  title="Git Push: Push committed changes to remote repository"
-                  disabled={gitActionLoading !== null}
-                  onClick={handleQuickGitPush}
-                >
-                  <UploadCloud size={11} color="#10b981" />
-                  <span>{gitActionLoading === 'push' ? 'Pushing...' : 'Push'}</span>
-                </button>
-
-                {/* Quick Git Commit Action Button */}
-                <button
-                  className="discussion-git-action-btn commit-btn"
-                  title="Git Commit: Stage all changes and commit"
-                  disabled={gitActionLoading !== null}
-                  onClick={handleQuickGitCommit}
-                >
-                  <Check size={11} color="#f59e0b" />
-                  <span>{gitActionLoading === 'commit' ? 'Committing...' : 'Commit'}</span>
-                </button>
-
-                {/* Quick Git Revert Action Button */}
-                <button
-                  className="discussion-git-action-btn revert-btn"
-                  title="Git Revert: Discard all uncommitted changes"
-                  disabled={gitActionLoading !== null}
-                  onClick={handleQuickGitRevert}
-                >
-                  <Undo2 size={11} color="#ef4444" />
-                  <span>{gitActionLoading === 'revert' ? 'Reverting...' : 'Revert'}</span>
-                </button>
-
-                {/* Feedback message banner if any */}
-                {gitActionMessage && (
-                  <span
-                    className={`discussion-git-msg ${gitActionMessage.includes('fail') || gitActionMessage.includes('error') ? 'error' : 'success'}`}
+          {/* Zone 2: Git Actions */}
+          <div className="discussion-header-zone zone-git">
+            <div className="discussion-zone-title">
+              <UploadCloud size={10} color="#38bdf8" />
+              <span>Git</span>
+              {/* Dev Log button in Git header title */}
+              {(gitInfo.isRepo || gitDetails?.isRepo) && (
+                <div style={{ position: 'relative', marginLeft: 'auto' }} ref={devLogRef}>
+                  <button
+                    className={`discussion-zone-mini-btn ${showDevLog ? 'active' : ''}`}
+                    title="Dev Log – Git commit history"
+                    onClick={handleOpenDevLog}
                   >
-                    {gitActionMessage}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="discussion-no-git-notice">No Git repository detected</span>
-            )}
+                    <ScrollText size={10} />
+                    <span>Dev Log</span>
+                  </button>
+
+                  {showDevLog && (
+                    <div className="discussion-devlog-dropdown">
+                      <div className="discussion-dropdown-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <ScrollText size={12} color="#60a5fa" />
+                        Git Commit Log
+                      </div>
+                      {devLogLoading ? (
+                        <div className="discussion-devlog-loading">Loading commits...</div>
+                      ) : devLogCommits.length === 0 ? (
+                        <div className="discussion-devlog-loading">No commits found.</div>
+                      ) : (
+                        <div className="discussion-devlog-list">
+                          {devLogCommits.map((c) => (
+                            <div key={c.hash} className="discussion-devlog-item">
+                              <span className="devlog-hash">{c.shortHash}</span>
+                              <span className="devlog-msg" title={c.message}>{c.message}</span>
+                              <span className="devlog-meta">{c.author} · {c.relativeTime}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="discussion-zone-content">
+              {gitInfo.isRepo || gitDetails?.isRepo ? (
+                <div className="discussion-git-actions-row">
+                  <button
+                    className="discussion-git-action-btn pull-btn"
+                    title="Git Pull: Fetch and merge remote changes"
+                    disabled={gitActionLoading !== null}
+                    onClick={handleQuickGitPull}
+                  >
+                    <DownloadCloud size={11} color="#38bdf8" />
+                    <span>{gitActionLoading === 'pull' ? 'Pulling...' : 'Pull'}</span>
+                  </button>
+
+                  <button
+                    className="discussion-git-action-btn push-btn"
+                    title="Git Push: Push committed changes to remote repository"
+                    disabled={gitActionLoading !== null}
+                    onClick={handleQuickGitPush}
+                  >
+                    <UploadCloud size={11} color="#10b981" />
+                    <span>{gitActionLoading === 'push' ? 'Pushing...' : 'Push'}</span>
+                  </button>
+
+                  <button
+                    className="discussion-git-action-btn commit-btn"
+                    title="Git Commit: Stage all changes and commit"
+                    disabled={gitActionLoading !== null}
+                    onClick={handleQuickGitCommit}
+                  >
+                    <Check size={11} color="#f59e0b" />
+                    <span>{gitActionLoading === 'commit' ? 'Committing...' : 'Commit'}</span>
+                  </button>
+
+                  <button
+                    className="discussion-git-action-btn revert-btn"
+                    title="Git Revert: Discard all uncommitted changes"
+                    disabled={gitActionLoading !== null}
+                    onClick={handleQuickGitRevert}
+                  >
+                    <Undo2 size={11} color="#ef4444" />
+                    <span>{gitActionLoading === 'revert' ? 'Reverting...' : 'Revert'}</span>
+                  </button>
+
+                  {gitActionMessage && (
+                    <span
+                      className={`discussion-git-msg ${gitActionMessage.includes('fail') || gitActionMessage.includes('error') ? 'error' : 'success'}`}
+                    >
+                      {gitActionMessage}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="discussion-zone-empty">No git repo</span>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Roles & Agents Column – right side of header */}
-        <div className="discussion-header-agents">
-          {/* Top row: Roles modal trigger button */}
-          <button
-            className="discussion-header-roles-btn"
-            title={`Configure Roles & Supervisor (${roles.length} roles)`}
-            onClick={() => setIsRoleModalOpen(true)}
-          >
-            <Sliders size={12} color="#a5b4fc" />
-            <span>Roles ({roles.length})</span>
-          </button>
-
-          {/* Bottom row: Agent icon buttons (no label) */}
-          <div className="discussion-header-agents-icons">
-            {assignedAgents.map((ag) => (
+          {/* Zone 3: Agents */}
+          <div className="discussion-header-zone zone-agents">
+            <div className="discussion-zone-title">
+              <Bot size={10} color="#60a5fa" />
+              <span>Agents</span>
+              {/* Roles modal button in agents title */}
               <button
-                key={ag.id}
-                className="discussion-agent-icon-btn"
-                title={`${ag.name} (${ag.command})\nClick to mention in chat or manage`}
-                onClick={() => handleSelectMention(ag)}
+                className="discussion-zone-mini-btn"
+                title={`Configure Roles & Supervisor (${roles.length} roles)`}
+                onClick={() => setIsRoleModalOpen(true)}
+                style={{ marginLeft: 'auto' }}
               >
-                <Bot size={13} color="#60a5fa" />
+                <Sliders size={10} color="#a5b4fc" />
+                <span>Roles ({roles.length})</span>
               </button>
-            ))}
-            <button
-              className="discussion-agent-icon-btn add-btn"
-              title="Add or manage agents"
-              onClick={onOpenManageAgents}
-            >
-              <Plus size={12} color="#94a3b8" />
-            </button>
+            </div>
+            <div className="discussion-zone-content">
+              <div className="discussion-header-agents-icons">
+                {assignedAgents.map((ag) => (
+                  <button
+                    key={ag.id}
+                    className="discussion-agent-icon-btn"
+                    title={`${ag.name} (${ag.command})\nClick to mention in chat`}
+                    onClick={() => handleSelectMention(ag)}
+                  >
+                    <Bot size={13} color="#60a5fa" />
+                  </button>
+                ))}
+                <button
+                  className="discussion-agent-icon-btn add-btn"
+                  title="Add or manage agents"
+                  onClick={onOpenManageAgents}
+                >
+                  <Plus size={12} color="#94a3b8" />
+                </button>
+              </div>
+            </div>
           </div>
+
+          {/* Clear History Icon Button at far right */}
+          {messages.length > 0 && (
+            <button
+              className="discussion-clear-history-btn"
+              title="Clear discussion history"
+              onClick={handleClearHistory}
+            >
+              <Trash2 size={12} color="#9ca3af" />
+            </button>
+          )}
         </div>
       </div>
 
