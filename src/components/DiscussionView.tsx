@@ -917,13 +917,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                 <Folder size={11} />
                 <span>{project.path}</span>
               </span>
-              {gitInfo.isRepo && (
-                <span className={`discussion-git-badge ${gitInfo.isDirty ? 'dirty' : 'clean'}`}>
-                  <GitBranch size={11} />
-                  <span>{gitInfo.branch || 'main'}</span>
-                  {gitInfo.isDirty && <span className="git-dot">●</span>}
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -1089,27 +1082,27 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
 
                 <div className="discussion-header-divider" />
 
-                {/* Branch Switcher Button */}
+                {/* Branches Modal Action */}
                 <button
                   className="discussion-git-action-btn branch-btn"
                   title="Switch or view Git branches"
                   onClick={() => onOpenGitModal?.('branches')}
                 >
                   <GitBranch size={11} color="#60a5fa" />
-                  <span>{gitDetails?.branch || gitInfo.branch || 'main'}</span>
+                  <span>Branches</span>
                 </button>
 
-                {/* Changes / Diff Reviewer Button */}
+                {/* Changes / Diff Reviewer Action */}
                 <button
-                  className={`discussion-git-action-btn ${(gitDetails?.isDirty || gitInfo.isDirty) ? 'dirty' : ''}`}
+                  className="discussion-git-action-btn"
                   title="View Git Changes & Diff"
                   onClick={() => onOpenGitModal?.('changes')}
                 >
-                  <FileText size={11} color={(gitDetails?.isDirty || gitInfo.isDirty) ? '#f59e0b' : '#10b981'} />
-                  <span>{(gitDetails?.isDirty || gitInfo.isDirty) ? `${gitDetails?.changeCount || 'Modified'} changes` : 'Clean'}</span>
+                  <FileText size={11} color="#94a3b8" />
+                  <span>Changes</span>
                 </button>
 
-                {/* Commit History Button */}
+                {/* Commit History Action */}
                 <button
                   className="discussion-git-action-btn"
                   title="View Commit History"

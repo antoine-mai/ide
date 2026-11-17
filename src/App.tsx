@@ -586,6 +586,12 @@ export default function App() {
 
   const activeDynamicTab = openTabs.find((t) => t.id === activeTabId);
 
+  // Lấy danh sách assigned agents của project hiện tại
+  const assignedAgentIds =
+    currentProjectState.assignedAgentIds ||
+    (currentProjectState.primaryAIId ? [currentProjectState.primaryAIId] : []);
+  const assignedAgents = installedAIs.filter((a) => assignedAgentIds.includes(a.id));
+
   // Tìm AI của tab hiện tại đang focus để hiển thị trên statusbar
   const activeTabAI =
     activeTabId === 'primary-agent'
@@ -1080,9 +1086,32 @@ export default function App() {
           {/* Status Bar bounded between Left Bar and Right Bar */}
           <footer className="statusbar">
             <div className="statusbar-left">
-              <div className="statusbar-item">
-                <span className={`status-dot ${activeTabAI ? '' : 'idle'}`} />
-                <span>{activeTabAI ? activeTabAI.name : 'No Agent Selected'}</span>
+              <div
+                className="statusbar-item clickable"
+                title={
+                  activeTabId === 'primary-agent'
+                    ? `Discussion Swarm: ${assignedAgents.length > 0 ? assignedAgents.map((a) => a.name).join(', ') : 'No agents assigned'}\nClick to manage agents`
+                    : `Active Agent: ${activeTabAI ? activeTabAI.name : 'None'}`
+                }
+                onClick={handleOpenManageAgents}
+              >
+                {activeTabId === 'primary-agent' ? (
+                  <>
+                    <Bot size={13} color={assignedAgents.length > 0 ? '#60a5fa' : '#8f9299'} />
+                    <span>
+                      {assignedAgents.length === 0
+                        ? 'No Agents Assigned'
+                        : assignedAgents.length === 1
+                        ? assignedAgents[0].name
+                        : `${assignedAgents.map((a) => a.name).join(', ')} (${assignedAgents.length} agents)`}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className={`status-dot ${activeTabAI ? '' : 'idle'}`} />
+                    <span>{activeTabAI ? activeTabAI.name : 'No Agent Selected'}</span>
+                  </>
+                )}
               </div>
 
               {activeProject && activeProjectGit.isRepo && (
